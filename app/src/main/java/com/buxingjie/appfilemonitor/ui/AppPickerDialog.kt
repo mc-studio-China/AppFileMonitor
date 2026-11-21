@@ -1,6 +1,7 @@
 package com.buxingjie.appfilemonitor.ui
 
 import android.app.Dialog
+import android.content.pm.ApplicationInfo
 import android.os.Bundle
 import android.view.View
 import androidx.core.widget.doAfterTextChanged
@@ -26,6 +27,9 @@ class AppPickerDialog : DialogFragment() {
         binding.inputSearch.doAfterTextChanged {
             adapter.filter(it?.toString().orEmpty())
         }
+        binding.checkSystem.setOnCheckedChangeListener { _, checked ->
+            adapter.setShowSystem(checked)
+        }
 
         val dialog = MaterialAlertDialogBuilder(requireContext())
             .setTitle("选择应用")
@@ -45,7 +49,8 @@ class AppPickerDialog : DialogFragment() {
                     .getOrDefault(p.packageName)
                 val icon = runCatching { ai.loadIcon(pm) }.getOrNull()
                     ?: pm.defaultActivityIcon
-                list.add(InstalledApp(p.packageName, label, icon))
+                val sys = (ai.flags and (ApplicationInfo.FLAG_SYSTEM or ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0
+                list.add(InstalledApp(p.packageName, label, icon, sys))
             }
             list.sortBy { it.label.lowercase() }
             activity?.runOnUiThread {

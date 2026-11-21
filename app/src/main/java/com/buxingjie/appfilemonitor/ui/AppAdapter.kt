@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.buxingjie.appfilemonitor.databinding.ItemAppBinding
 
-data class InstalledApp(val pkg: String, val label: String, val icon: Drawable)
+data class InstalledApp(val pkg: String, val label: String, val icon: Drawable, val system: Boolean = false)
 
 class AppAdapter(private val onClick: (InstalledApp) -> Unit) :
     RecyclerView.Adapter<AppAdapter.VH>() {
@@ -14,6 +14,7 @@ class AppAdapter(private val onClick: (InstalledApp) -> Unit) :
     private var all: List<InstalledApp> = emptyList()
     private var shown: List<InstalledApp> = emptyList()
     private var query: String = ""
+    private var showSystem: Boolean = false
 
     fun submit(list: List<InstalledApp>) {
         all = list
@@ -25,11 +26,17 @@ class AppAdapter(private val onClick: (InstalledApp) -> Unit) :
         applyFilter()
     }
 
+    fun setShowSystem(v: Boolean) {
+        showSystem = v
+        applyFilter()
+    }
+
     private fun applyFilter() {
+        val base = if (showSystem) all else all.filter { !it.system }
         shown = if (query.isEmpty()) {
-            all
+            base
         } else {
-            all.filter {
+            base.filter {
                 it.label.lowercase().contains(query) || it.pkg.lowercase().contains(query)
             }
         }
