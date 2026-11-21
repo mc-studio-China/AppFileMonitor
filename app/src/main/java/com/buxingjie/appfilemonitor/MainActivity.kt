@@ -35,7 +35,16 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
 
         binding.pager.adapter = TabsAdapter(this)
+        val navIcons = intArrayOf(
+            R.drawable.ic_nav_monitor, R.drawable.ic_nav_files, R.drawable.ic_nav_settings
+        )
+        val tint = android.content.res.ColorStateList(
+            arrayOf(intArrayOf(android.R.attr.state_selected), intArrayOf(-android.R.attr.state_selected)),
+            intArrayOf(getColor(R.color.brand), getColor(R.color.muted))
+        )
+        binding.tabs.setTabIconTint(tint)
         TabLayoutMediator(binding.tabs, binding.pager) { tab, position ->
+            tab.icon = getDrawable(navIcons[position])
             tab.text = when (position) {
                 0 -> I18n.t(this, "监控")
                 1 -> I18n.t(this, "文件")
