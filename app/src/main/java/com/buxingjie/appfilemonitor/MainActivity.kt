@@ -61,6 +61,13 @@ class MainActivity : AppCompatActivity() {
             MonitorWorker.schedule(ctx)
         }
         I18n.apply(binding.root)
+
+        // 升级后清掉残留的安装包，避免占空间
+        lifecycleScope.launch(Dispatchers.IO) {
+            runCatching {
+                java.io.File(cacheDir, "update").listFiles()?.forEach { it.delete() }
+            }
+        }
     }
 
     override fun onStart() {
