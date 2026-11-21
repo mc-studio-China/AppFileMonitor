@@ -58,18 +58,11 @@
             app:singleSelection="true">
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chipPrivate"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checked="true"
-                android:text="私有数据" />
-
-            <com.google.android.material.chip.Chip
                 android:id="@+id/chipExtData"
                 style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:checked="true"
                 android:text="外部数据" />
 
             <com.google.android.material.chip.Chip
@@ -78,8 +71,24 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="外部媒体" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipPrivate"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="私有数据（需 Root）" />
         </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>
+
+    <TextView
+        android:id="@+id/tvCapability"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="免 Root：可读写外部数据/媒体"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textSize="11sp" />
 
     <LinearLayout
         android:layout_width="match_parent"

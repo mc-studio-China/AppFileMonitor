@@ -14,7 +14,8 @@ class Scanner(private val ctx: Context) {
         val total: Int,
         val baselineRoots: Int,
         val errors: List<String>,
-        val durationMs: Long
+        val durationMs: Long,
+        val privateSkipped: Boolean = false
     )
 
     private data class RootDef(
@@ -32,13 +33,14 @@ class Scanner(private val ctx: Context) {
         var modified = 0
         var total = 0
         var baselines = 0
+        var privateSkipped = false
         val errors = ArrayList<String>()
 
         val roots = ArrayList<RootDef>()
         if (Shell.privateSupported(pkg)) {
             roots.add(RootDef("private", "应用私有数据", Shell.privateRoot(pkg), true, null))
         } else {
-            errors.add("私有数据不可访问：需要 Root，或目标应用为 debuggable（可用 run-as）")
+            privateSkipped = true
         }
         roots.add(
             RootDef(
@@ -122,7 +124,7 @@ class Scanner(private val ctx: Context) {
 
         return Result(
             added, deleted, modified, total, baselines, errors,
-            System.currentTimeMillis() - started
+            System.currentTimeMillis() - started, privateSkipped
         )
     }
 

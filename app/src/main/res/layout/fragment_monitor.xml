@@ -151,6 +151,15 @@
         android:textColor="?attr/colorOnSurfaceVariant"
         android:textSize="11sp" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnDownloads"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start"
+        android:minHeight="0dp"
+        android:text="查找该应用的下载文件（免 Root）" />
+
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

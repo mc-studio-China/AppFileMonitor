@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.buxingjie.appfilemonitor.R
 import com.buxingjie.appfilemonitor.core.DbHelper
+import com.buxingjie.appfilemonitor.core.DownloadFinder
 import com.buxingjie.appfilemonitor.core.Format
 import com.buxingjie.appfilemonitor.core.MonitorWorker
 import com.buxingjie.appfilemonitor.core.Prefs
@@ -89,6 +90,7 @@ class MonitorFragment : Fragment() {
         }
         binding.btnScan.setOnClickListener { scanNow() }
         binding.btnMonitor.setOnClickListener { toggleMonitor() }
+        binding.btnDownloads.setOnClickListener { findDownloads() }
         binding.btnGrant.setOnClickListener { requestShizuku() }
         binding.btnRoot.setOnClickListener { detectRoot() }
     }
@@ -145,6 +147,7 @@ class MonitorFragment : Fragment() {
             binding.tvAppPkg.text = "请选择要监控的应用"
             binding.btnScan.isEnabled = false
             binding.btnMonitor.isEnabled = false
+            binding.btnDownloads.isEnabled = false
             return
         }
         runCatching {
@@ -158,6 +161,7 @@ class MonitorFragment : Fragment() {
         }
         binding.btnScan.isEnabled = !scanning
         binding.btnMonitor.isEnabled = true
+        binding.btnDownloads.isEnabled = true
     }
 
     private fun renderStatus(status: Status) {
@@ -170,8 +174,17 @@ class MonitorFragment : Fragment() {
             text.append("，未授权")
         }
         if (target != null) {
-            text.append("\n私有数据：")
-            text.append(if (status.privateOk) "可访问" else "不可访问（需 Root 或目标应用 debuggable）")
+            val fullRoot = status.mode == Shell.Mode.ROOT || status.mode == Shell.Mode.SHIZUKU_ROOT
+            val download = if (Prefs.includeDownload(requireContext())) " + Download" else ""
+            text.append("\n监控范围：外部数据 + 外部媒体").append(download)
+            text.append(if (fullRoot) "（Root）" else "（免 Root）")
+            text.append("\n私有数据：").append(
+                when {
+                    fullRoot -> "可访问（Root）"
+                    status.privateOk -> "可访问（debuggable / run-as）"
+                    else -> "不可访问（需 Root 或 debuggable）"
+                }
+            )
         }
         binding.tvPerm.text = text.toString()
         binding.btnGrant.visibility =
@@ -285,7 +298,9 @@ class MonitorFragment : Fragment() {
             } else {
                 "扫描完成：新增 ${result.added} · 删除 ${result.deleted} · 修改 ${result.modified}"
             }
-            toast(message)
+            toast(
+                if (result.privateSkipped) "$message\n私有目录不可访问，已跳过" else message
+            )
             if (result.errors.isNotEmpty()) {
                 AlertDialog.Builder(requireContext())
                     .setTitle("部分目录不可访问")
@@ -317,6 +332,50 @@ class MonitorFragment : Fragment() {
             MonitorWorker.schedule(ctx)
         }
         updateMonitorButton()
+    }
+
+    private fun findDownloads() {
+        val pkg = target ?: return toast("请先选择应用")
+        binding.btnDownloads.isEnabled = false
+        binding.btnDownloads.text = "查询中…"
+        viewLifecycleOwner.lifecycleScope.launch {
+            val found = withContext(Dispatchers.IO) {
+                runCatching { DownloadFinder.find(pkg) }.getOrNull()
+            }
+            if (_binding == null) return@launch
+            binding.btnDownloads.isEnabled = true
+            binding.btnDownloads.text = "查找该应用的下载文件（免 Root）"
+            if (found == null) {
+                toast("查询失败")
+                return@launch
+            }
+            if (found.items.isEmpty()) {
+                AlertDialog.Builder(requireContext())
+                    .setTitle("未找到共享存储中的下载文件")
+                    .setMessage(
+                        found.error
+                            ?: "MediaStore / DownloadManager 中没有该应用的记录。\n\n" +
+                            "很多应用会直接写入私有目录或 Android/data，这类位置无法通过免 Root 查询。"
+                    )
+                    .setPositiveButton("知道了", null)
+                    .show()
+                return@launch
+            }
+            val shown = found.items.take(50)
+            val msg = buildString {
+                for (item in shown) {
+                    append(item.path).append("\n来源：").append(item.source).append("\n\n")
+                }
+                if (found.items.size > shown.size) {
+                    append("仅显示前 ${shown.size} 条，共 ${found.items.size} 条。")
+                }
+            }
+            AlertDialog.Builder(requireContext())
+                .setTitle("该应用在共享存储中的文件（${found.items.size}）")
+                .setMessage(msg.trim())
+                .setPositiveButton("关闭", null)
+                .show()
+        }
     }
 
     private fun requestShizuku() {

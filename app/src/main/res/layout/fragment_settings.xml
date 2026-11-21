@@ -57,6 +57,14 @@
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="12sp" />
 
+                <TextView
+                    android:id="@+id/tvCapabilities"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="权限范围：检测中…"
+                    android:textSize="12sp" />
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -99,6 +107,13 @@
                         android:layout_marginStart="8dp"
                         android:text="刷新状态" />
                 </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDisableRoot"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="仅用 Shizuku（关闭 Root）" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -203,7 +218,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="• 读取/写入其他应用的 /data/data 需要 Root 权限。\n• Shizuku 以 shell(2000) 运行时，只能访问 debuggable 应用的私有目录，但可完整访问 /sdcard/Android/data 和 /sdcard/Android/media。\n• 如果 Shizuku 以 Root 方式启动，则拥有完整的私有目录读写权限。\n• 导入文件后会自动修正属主与 SELinux 上下文（Root 模式）。"
+                    android:text="免 Root（只使用 Shizuku）模式：\n• 可读写 /sdcard/Android/data、/sdcard/Android/media 和共享 Download。\n• 无法访问任意应用的 /data/data；仅 debuggable 应用可通过 run-as 访问。\n• 这是 Android 的 UID/SELinux 限制，并非本应用缺陷。\n\nRoot 增强模式（可选）：\n• 可访问所有应用的私有目录，并在写入后自动修正属主与 SELinux 上下文。\n• 如果 Shizuku 以 Root 启动，也视为 Root 模式。"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="12sp" />
             </LinearLayout>

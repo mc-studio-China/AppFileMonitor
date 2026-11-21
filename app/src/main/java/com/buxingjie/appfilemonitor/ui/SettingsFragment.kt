@@ -66,6 +66,11 @@ class SettingsFragment : Fragment() {
         binding.btnOpenShizuku.setOnClickListener { openShizuku() }
         binding.btnDetectRoot.setOnClickListener { detectRoot() }
         binding.btnRefreshStatus.setOnClickListener { refreshStatus() }
+        binding.btnDisableRoot.setOnClickListener {
+            Shell.disableRoot(requireContext())
+            toast("已关闭 Root，仅使用 Shizuku")
+            refreshStatus()
+        }
         refreshStatus()
         loadSignature()
     }
@@ -116,7 +121,16 @@ class SettingsFragment : Fragment() {
             }
             binding.tvMode.text = "执行模式：${st.mode.label}"
             binding.tvRoot.text = if (st.rootOk) "Root：已启用（su）" else "Root：未启用"
+            binding.tvCapabilities.text = when (st.mode) {
+                Shell.Mode.ROOT, Shell.Mode.SHIZUKU_ROOT ->
+                    "权限范围：私有目录 + 外部数据/媒体 + Download"
+                Shell.Mode.SHIZUKU_SHELL ->
+                    "免 Root 模式：外部数据/媒体 + Download\n私有目录：仅 debuggable 应用可访问"
+                Shell.Mode.NONE ->
+                    "未授权：仅能访问共享存储（受系统限制）"
+            }
             binding.btnGrantShizuku.isEnabled = st.running && !st.granted
+            binding.btnDisableRoot.isEnabled = Shell.isRoot()
         }
     }
 

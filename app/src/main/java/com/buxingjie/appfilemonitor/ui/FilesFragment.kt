@@ -31,10 +31,12 @@ class FilesFragment : Fragment() {
 
     private var adapter: FilesAdapter? = null
     private var target: String? = null
-    private var rootId = "private"
+    private var rootId = "ext_data"
     private var currentPath: String? = null
     private var loading = false
     private var updatingChips = false
+    private var privateOk = false
+    private var privateChecked: String? = null
 
     private val importLauncher =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -68,20 +70,28 @@ class FilesFragment : Fragment() {
             val pkg = b.getString("pkg") ?: return@setFragmentResultListener
             Prefs.setTarget(requireContext(), pkg)
             target = null
-            rootId = "private"
+            rootId = "ext_data"
             currentPath = null
-            switchChip("private")
+            privateOk = false
+            privateChecked = null
+            switchChip("ext_data")
             loadState()
         }
 
         binding.rootChips.setOnCheckedStateChangeListener { _, ids ->
             if (updatingChips) return@setOnCheckedStateChangeListener
             val id = ids.firstOrNull() ?: return@setOnCheckedStateChangeListener
-            rootId = when (id) {
+            val newRoot = when (id) {
                 R.id.chipExtData -> "ext_data"
                 R.id.chipExtMedia -> "ext_media"
                 else -> "private"
             }
+            if (newRoot == "private" && target != null && !Shell.isRoot() && !privateOk) {
+                toast("私有目录不可访问：需要 Root，或目标应用为 debuggable")
+                switchChip(rootId)
+                return@setOnCheckedStateChangeListener
+            }
+            rootId = newRoot
             currentPath = null
             loadState()
         }
@@ -152,27 +162,32 @@ class FilesFragment : Fragment() {
 
     private fun loadState() {
         val ctx = requireContext().applicationContext
-        val pkg = Prefs.target(ctx)
         viewLifecycleOwner.lifecycleScope.launch {
             withContext(Dispatchers.IO) {
                 Shell.awaitBinder(1000)
                 Shell.refresh(ctx)
             }
             if (_binding == null) return@launch
+            val pkg = Prefs.target(ctx)
             if (pkg != target) {
                 target = pkg
                 currentPath = null
-                if (pkg != null) {
-                    val ok = withContext(Dispatchers.IO) {
-                        runCatching { Shell.privateSupported(pkg) }.getOrDefault(false)
-                    }
-                    if (!ok && rootId == "private") {
-                        rootId = "ext_data"
-                    }
+                rootId = "ext_data"
+                privateOk = false
+                privateChecked = null
+            }
+            if (pkg != null && privateChecked != pkg) {
+                privateOk = withContext(Dispatchers.IO) {
+                    runCatching { Shell.privateSupported(pkg) }.getOrDefault(false)
                 }
+                privateChecked = pkg
+            }
+            if (rootId == "private" && !Shell.isRoot() && !privateOk) {
+                rootId = "ext_data"
             }
             switchChip(rootId)
             updateHeader()
+            updateCapability()
             if (pkg == null) {
                 showEmpty("请选择应用")
                 return@launch
@@ -181,6 +196,25 @@ class FilesFragment : Fragment() {
             val path = currentPath?.takeIf { it == base || it.startsWith("$base/") } ?: base
             loadDir(path)
         }
+    }
+
+    private fun updateCapability() {
+        val pkg = target
+        if (pkg == null) {
+            binding.tvCapability.text = "免 Root：可读写外部数据/媒体"
+            binding.btnImport.isEnabled = false
+            binding.btnMkdir.isEnabled = false
+            return
+        }
+        val fullRoot = Shell.isRoot()
+        binding.tvCapability.text = when {
+            fullRoot -> "Root 模式：私有数据 + 外部数据 + 外部媒体均可读写"
+            privateOk -> "Shizuku 免 Root：外部数据/媒体可读写；该应用 debuggable，私有目录也可访问"
+            else -> "Shizuku 免 Root：外部数据/媒体可读写；私有目录需 Root 或 debuggable"
+        }
+        val canWrite = fullRoot || privateOk || rootId != "private"
+        binding.btnImport.isEnabled = canWrite
+        binding.btnMkdir.isEnabled = canWrite
     }
 
     private fun loadDir(path: String) {
@@ -199,11 +233,20 @@ class FilesFragment : Fragment() {
             binding.btnUp.isEnabled = path != base
             adapter?.submit(list)
             when {
-                err != null -> showEmpty(err)
+                err != null -> showEmpty(
+                    if (rootId == "private" && !privateOk) {
+                        "私有目录不可访问\n\n" +
+                            "Shizuku(Shell) 无法读取任意应用的 /data/data；" +
+                            "需要 Root，或目标应用为 debuggable。\n请切换到「外部数据」。"
+                    } else {
+                        err
+                    }
+                )
+
                 list.isEmpty() -> showEmpty(
                     "目录为空或不存在\n\n" +
-                        "提示：Shizuku(Shell) 只能访问 debuggable 应用的私有目录；" +
-                        "访问任意应用 /data/data 需要 Root。"
+                        "免 Root 模式可读写外部数据与外部媒体；" +
+                        "私有目录需要 Root 或 debuggable 应用。"
                 )
 
                 else -> binding.tvFilesEmpty.visibility = View.GONE
