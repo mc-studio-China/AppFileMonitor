@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.buxingjie.appfilemonitor.BuildConfig
+import com.buxingjie.appfilemonitor.core.I18n
 import com.buxingjie.appfilemonitor.core.Prefs
 import com.buxingjie.appfilemonitor.core.Shell
 import com.buxingjie.appfilemonitor.databinding.FragmentSettingsBinding
@@ -74,6 +75,23 @@ class SettingsFragment : Fragment() {
             toast("已关闭 Root，仅使用 Shizuku")
             refreshStatus()
         }
+        binding.tvLanguage.text = languageLabel(ctx)
+        binding.btnLanguage.setOnClickListener { showLanguageDialog() }
+        binding.btnMethodWifi.setOnClickListener { showGuide("无线调试（免电脑）",
+            "1. 下拉通知栏，点「打开 Shizuku」\n" +
+            "2. 在 Shizuku 里选择「通过无线调试启动」→ 点「配对」\n" +
+            "3. 打开系统「开发者选项 → 无线调试 → 使用配对码配对设备」，输入 6 位配对码\n" +
+            "4. 配对成功后回到 Shizuku 点「启动」，状态变为「运行中」\n\n" +
+            "提示：Android 11 及以上才支持无线调试；部分机型需保持屏幕常亮。", null) }
+        binding.btnMethodRoot.setOnClickListener { showGuide("Root 启动",
+            "1. 确认手机已 Root，并已授予 Shizuku 管理员权限\n" +
+            "2. 打开 Shizuku → 选择「通过 Root 启动」\n" +
+            "3. 返回本应用，点「授权 Shizuku」，再点「检测 Root」\n\n" +
+            "Root 模式下可读写任意应用的私有目录。", null) }
+        binding.btnMethodAdb.setOnClickListener { showGuide("USB / ADB 启动",
+            "1. 手机开启「USB 调试」，用数据线连接电脑\n" +
+            "2. 电脑命令行执行下面这条命令启动 Shizuku：",
+            "adb shell sh /sdcard/Android/data/moe.shizuku.privileged.api/start.sh") }
         binding.btnCheckUpdate.setOnClickListener {
             UpdatePrompter(requireActivity() as androidx.appcompat.app.AppCompatActivity)
                 .check(auto = false)
@@ -84,6 +102,7 @@ class SettingsFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        _binding?.root?.let { I18n.apply(it) }
         refreshStatus()
     }
 
@@ -198,8 +217,50 @@ class SettingsFragment : Fragment() {
         return digest.joinToString(":") { String.format("%02X", it) }
     }
 
+    private fun languageLabel(ctx: Context): String {
+        val code = Prefs.lang(ctx)
+        return if (code == I18n.AUTO) I18n.labelOf(I18n.AUTO) else I18n.labelOf(code)
+    }
+
+    private fun showLanguageDialog() {
+        val ctx = requireContext()
+        val codes = ArrayList<String>().apply {
+            add(I18n.AUTO)
+            I18n.LANGS.forEach { add(it.code) }
+        }
+        val names = codes.map {
+            if (it == I18n.AUTO) I18n.labelOf(I18n.AUTO) else I18n.labelOf(it)
+        }.toTypedArray()
+        val current = codes.indexOf(Prefs.lang(ctx)).coerceAtLeast(0)
+        androidx.appcompat.app.AlertDialog.Builder(ctx)
+            .setTitle("选择界面语言")
+            .setSingleChoiceItems(names, current) { dialog, which ->
+                Prefs.setLang(ctx, codes[which])
+                dialog.dismiss()
+                requireActivity().recreate()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun showGuide(title: String, body: String, copyText: String?) {
+        val builder = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle(title)
+            .setMessage(body)
+            .setNegativeButton("关闭", null)
+        if (copyText != null) {
+            builder.setPositiveButton("复制命令") { _, _ ->
+                val cm = requireContext().getSystemService(Context.CLIPBOARD_SERVICE)
+                        as android.content.ClipboardManager
+                cm.setPrimaryClip(android.content.ClipData.newPlainText("cmd", copyText))
+                toast("已复制到剪贴板")
+            }
+        }
+        builder.show()
+    }
+
     private fun toast(msg: String) {
-        Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+        Toast.makeText(requireContext(), I18n.t(requireContext(), msg), Toast.LENGTH_SHORT).show()
     }
 
     companion object {

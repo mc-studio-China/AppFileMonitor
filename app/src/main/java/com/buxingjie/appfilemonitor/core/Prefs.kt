@@ -30,6 +30,13 @@ object Prefs {
     fun rootVerified(ctx: Context): Boolean =
         sp(ctx).getBoolean("root_ok", false)
 
+    fun lang(ctx: Context): String =
+        sp(ctx).getString("ui_lang", "auto") ?: "auto"
+
+    fun setLang(ctx: Context, code: String) {
+        sp(ctx).edit().putString("ui_lang", code).apply()
+    }
+
     fun ignoredVersion(ctx: Context): String? =
         sp(ctx).getString("ignored_update", null)
 

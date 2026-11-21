@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.buxingjie.appfilemonitor.R
 import com.buxingjie.appfilemonitor.core.Format
 import com.buxingjie.appfilemonitor.core.Fs
+import com.buxingjie.appfilemonitor.core.I18n
 import com.buxingjie.appfilemonitor.core.Prefs
 import com.buxingjie.appfilemonitor.core.Shell
 import com.buxingjie.appfilemonitor.databinding.FragmentFilesBinding
@@ -116,6 +117,7 @@ class FilesFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        _binding?.root?.let { I18n.apply(it) }
         loadState()
     }
 
@@ -381,6 +383,6 @@ class FilesFragment : Fragment() {
     }
 
     private fun toast(msg: String) {
-        Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+        Toast.makeText(requireContext(), I18n.t(requireContext(), msg), Toast.LENGTH_SHORT).show()
     }
 }

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FileDetection · 应用文件监控</title>
+<meta name="description" content="FileDetection（应用文件监控）——基于 Shizuku 的免 Root 文件变化监控与文件管理工具。">
+<link rel="icon" href="icon.png">
+<style>
+:root{--brand:#1565C0;--brand2:#0B47A1;--bg:#F4F7FC;--card:#fff;--text:#101828;--muted:#5B6B82;--line:#E3EBF7}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:radial-gradient(1200px 600px at 50% -200px,#DCE9FF 0%,transparent 60%),var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding:0 20px}
+.hero{padding:60px 0 36px;text-align:center}
+.hero img{width:124px;height:124px;border-radius:28px;box-shadow:0 18px 40px rgba(21,101,192,.28)}
+h1{font-size:34px;margin:22px 0 8px;letter-spacing:-.5px}
+.tag{color:var(--muted);font-size:16px;margin:0;line-height:1.6}
+.badges{margin-top:18px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.badge{background:#E7F0FF;color:var(--brand2);font-size:13px;padding:6px 12px;border-radius:999px;font-weight:600}
+.cta{margin-top:26px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 26px;border-radius:16px;font-weight:700;text-decoration:none;font-size:16px}
+.btn.primary{background:linear-gradient(180deg,#1B74E4,var(--brand2));color:#fff;box-shadow:0 12px 26px rgba(11,71,161,.3)}
+.btn.ghost{background:#fff;color:var(--brand2);border:1px solid #CFE0F8}
+section{padding:24px 0}
+h2{font-size:21px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 6px 20px rgba(16,24,40,.04)}
+.card h3{margin:0 0 8px;font-size:16px}
+.card p{margin:0;color:var(--muted);font-size:14px;line-height:1.65}
+.steps{counter-reset:s;list-style:none;padding:0;margin:0}
+.steps li{counter-increment:s;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 16px 14px 52px;position:relative;margin-bottom:10px;font-size:14px;line-height:1.6}
+.steps li::before{content:counter(s);position:absolute;left:14px;top:12px;width:24px;height:24px;border-radius:50%;background:#E7F0FF;color:var(--brand2);font-weight:700;display:grid;place-items:center;font-size:13px}
+code{background:#EEF4FF;color:#0B3B85;padding:2px 6px;border-radius:6px;font-size:13px;word-break:break-all}
+.lang{display:flex;gap:8px;flex-wrap:wrap}
+.lang span{font-size:13px;color:var(--muted);background:#fff;border:1px solid var(--line);padding:5px 10px;border-radius:999px}
+footer{padding:32px 0 56px;text-align:center;color:var(--muted);font-size:13px;line-height:1.8}
+footer a{color:var(--brand);text-decoration:none}
+@media(prefers-color-scheme:dark){body{--bg:#0B1220;--card:#121A29;--text:#E8EEF9;--muted:#93A2BB;background:radial-gradient(1200px 600px at 50% -200px,#12315E 0%,transparent 60%),#0B1220}
+.card,.steps li{border-color:#1E2A3D;background:var(--card)}
+.badge,.steps li::before,.lang span{background:#16263F;color:#8FC0FF;border-color:#1E2A3D}
+.btn.ghost{background:#121A29;color:#8FC0FF;border-color:#22334D}
+code{background:#16263F;color:#9CC7FF}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <img src="icon.png" alt="FileDetection">
+  <h1>FileDetection</h1>
+  <p class="tag">应用文件监控 · 免 Root 也能看清每个应用新增、删除、修改了哪些文件</p>
+  <div class="badges">
+    <span class="badge">Shizuku 免 Root</span>
+    <span class="badge">无线调试 / Root / ADB</span>
+    <span class="badge">16 种语言</span>
+    <span class="badge">v3.0.26.1</span>
+  </div>
+  <div class="cta">
+    <a class="btn primary" href="https://github.com/mc-studio-China/AppFileMonitor/releases/latest">下载 APK</a>
+    <a class="btn ghost" href="https://github.com/mc-studio-China/AppFileMonitor">GitHub 仓库</a>
+  </div>
+</header>
+
+<section>
+  <h2>它能做什么</h2>
+  <div class="grid">
+    <div class="card"><h3>文件变化监控</h3><p>选定一个应用，自动对比基线，列出它新增、删除、修改的每一个文件。</p></div>
+    <div class="card"><h3>免 Root 读写</h3><p>通过 Shizuku 直接读写 Android/data、Android/media 与共享 Download。</p></div>
+    <div class="card"><h3>文件管理器</h3><p>浏览、复制、移动、重命名、编辑文本，任意应用的数据目录都能进。</p></div>
+    <div class="card"><h3>后台自动扫描</h3><p>WorkManager 每 15 分钟静默扫描一次，异常变动不容易漏掉。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>三种启动方式</h2>
+  <ol class="steps">
+    <li><b>无线调试（免电脑）</b>：开发者选项开启「无线调试」→ Shizuku 内点配对 → 输入 6 位配对码 → 启动。</li>
+    <li><b>Root</b>：已 Root 机型在 Shizuku 中选择「通过 Root 启动」，随后在本应用授权并检测 Root。</li>
+    <li><b>USB / ADB</b>：连接电脑执行 <code>adb shell sh /sdcard/Android/data/moe.shizuku.privileged.api/start.sh</code></li>
+  </ol>
+</section>
+
+<section>
+  <h2>界面语言</h2>
+  <p class="tag" style="margin-bottom:12px">默认跟随系统，也可以在「设置 → 界面语言」里手动切换。</p>
+  <div class="lang">
+    <span>简体中文</span><span>繁體中文</span><span>English</span><span>Español</span>
+    <span>Português (BR)</span><span>العربية</span><span>हिन्दी</span><span>Русский</span>
+    <span>日本語</span><span>한국어</span><span>Deutsch</span><span>Français</span>
+    <span>Italiano</span><span>Türkçe</span><span>Tiếng Việt</span><span>Bahasa Indonesia</span>
+  </div>
+</section>
+
+<footer>
+  © 2026 步行街工作室 · mc-studio-China<br>
+  <a href="https://github.com/mc-studio-China/AppFileMonitor">github.com/mc-studio-China/AppFileMonitor</a>
+</footer>
+
+</div>
+</body>
+</html>

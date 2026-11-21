@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import com.buxingjie.appfilemonitor.core.I18n
 import com.buxingjie.appfilemonitor.core.MonitorWorker
 import com.buxingjie.appfilemonitor.core.Prefs
 import com.buxingjie.appfilemonitor.core.Shell
@@ -25,16 +26,20 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        I18n.install(this)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        if (I18n.isRtl(this)) {
+            window.decorView.layoutDirection = android.view.View.LAYOUT_DIRECTION_RTL
+        }
         setSupportActionBar(binding.toolbar)
 
         binding.pager.adapter = TabsAdapter(this)
         TabLayoutMediator(binding.tabs, binding.pager) { tab, position ->
             tab.text = when (position) {
-                0 -> "监控"
-                1 -> "文件"
-                else -> "设置"
+                0 -> I18n.t(this, "监控")
+                1 -> I18n.t(this, "文件")
+                else -> I18n.t(this, "设置")
             }
         }.attach()
 
@@ -46,6 +51,7 @@ class MainActivity : AppCompatActivity() {
         if (Prefs.monitored(ctx).isNotEmpty()) {
             MonitorWorker.schedule(ctx)
         }
+        I18n.apply(binding.root)
     }
 
     override fun onStart() {

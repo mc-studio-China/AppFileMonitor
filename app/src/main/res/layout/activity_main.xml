@@ -9,14 +9,23 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorSurface"
         app:title="@string/app_name"
+        app:subtitle="文件监控 · File Monitor"
+        app:subtitleTextColor="?attr/colorOnSurfaceVariant"
         app:titleTextColor="?attr/colorOnSurface" />
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabs"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:tabMode="fixed" />
+        android:background="?attr/colorSurface"
+        app:tabIndicatorColor="@color/brand"
+        app:tabIndicatorFullWidth="false"
+        app:tabMode="fixed"
+        app:tabRippleColor="@null"
+        app:tabSelectedTextColor="@color/brand"
+        app:tabTextColor="?attr/colorOnSurfaceVariant" />
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/pager"
