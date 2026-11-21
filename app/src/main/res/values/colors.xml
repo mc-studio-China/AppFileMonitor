@@ -1,0 +1,9 @@
+<resources>
+    <color name="brand">#1565C0</color>
+    <color name="brand_dark">#0D47A1</color>
+    <color name="white">#FFFFFF</color>
+    <color name="added">#2E7D32</color>
+    <color name="deleted">#C62828</color>
+    <color name="modified">#EF6C00</color>
+    <color name="muted">#6B7280</color>
+</resources>
