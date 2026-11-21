@@ -58,6 +58,9 @@ class SettingsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val ctx = requireContext()
         binding.tvVersion.text = "应用文件监控 v${BuildConfig.VERSION_NAME}"
+        binding.tvUpdateStatus.text =
+            "当前版本 v${BuildConfig.VERSION_NAME}\n" +
+                "启动时自动检测 GitHub 最新版本；应用内下载会自动使用镜像站加速。"
         binding.switchDownload.isChecked = Prefs.includeDownload(ctx)
         binding.switchDownload.setOnCheckedChangeListener { _, checked ->
             Prefs.setIncludeDownload(ctx, checked)
