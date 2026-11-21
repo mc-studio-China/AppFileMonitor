@@ -104,8 +104,20 @@ class UpdatePrompter(private val activity: AppCompatActivity) {
         val bar = ProgressBar(activity, null, android.R.attr.progressBarStyleHorizontal).apply {
             max = 100
         }
-        container.addView(tv)
-        container.addView(bar)
+        container.addView(
+            tv,
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        )
+        container.addView(
+            bar,
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { topMargin = dp(8) }
+        )
 
         var cancelled = false
         val progress = AlertDialog.Builder(activity)
