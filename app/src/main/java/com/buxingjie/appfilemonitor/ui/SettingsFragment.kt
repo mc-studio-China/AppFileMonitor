@@ -71,6 +71,10 @@ class SettingsFragment : Fragment() {
             toast("已关闭 Root，仅使用 Shizuku")
             refreshStatus()
         }
+        binding.btnCheckUpdate.setOnClickListener {
+            UpdatePrompter(requireActivity() as androidx.appcompat.app.AppCompatActivity)
+                .check(auto = false)
+        }
         refreshStatus()
         loadSignature()
     }

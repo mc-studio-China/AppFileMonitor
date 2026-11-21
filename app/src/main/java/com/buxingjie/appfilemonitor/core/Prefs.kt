@@ -29,4 +29,11 @@ object Prefs {
 
     fun rootVerified(ctx: Context): Boolean =
         sp(ctx).getBoolean("root_ok", false)
+
+    fun ignoredVersion(ctx: Context): String? =
+        sp(ctx).getString("ignored_update", null)
+
+    fun setIgnoredVersion(ctx: Context, version: String) {
+        sp(ctx).edit().putString("ignored_update", version).apply()
+    }
 }

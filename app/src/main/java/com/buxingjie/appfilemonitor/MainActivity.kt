@@ -13,6 +13,7 @@ import com.buxingjie.appfilemonitor.databinding.ActivityMainBinding
 import com.buxingjie.appfilemonitor.ui.FilesFragment
 import com.buxingjie.appfilemonitor.ui.MonitorFragment
 import com.buxingjie.appfilemonitor.ui.SettingsFragment
+import com.buxingjie.appfilemonitor.ui.UpdatePrompter
 import com.google.android.material.tabs.TabLayoutMediator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,6 +44,9 @@ class MainActivity : AppCompatActivity() {
         }
         if (Prefs.monitored(ctx).isNotEmpty()) {
             MonitorWorker.schedule(ctx)
+        }
+        if (savedInstanceState == null) {
+            UpdatePrompter(this).check(auto = true)
         }
     }
 
