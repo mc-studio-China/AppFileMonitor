@@ -381,5 +381,16 @@
             android:textColor="?attr/colorOnSurfaceVariant"
             android:textSize="11sp" />
 
+        <TextView
+            android:id="@+id/tvWatermark"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center"
+            android:text="抖音：@的纯的步行街"
+            android:textColor="@color/brand"
+            android:textSize="11sp"
+            android:alpha="0.7" />
+
     </LinearLayout>
 </ScrollView>

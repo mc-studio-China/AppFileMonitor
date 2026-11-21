@@ -4,9 +4,9 @@
         <item name="colorOnPrimary">@color/white</item>
         <item name="colorPrimaryContainer">#D6E4FF</item>
         <item name="colorOnPrimaryContainer">#001B3F</item>
-        <item name="android:statusBarColor">@color/brand_dark</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:navigationBarColor">@color/brand_dark</item>
+        <item name="android:statusBarColor">@color/white</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@color/white</item>
         <item name="colorSurface">#FFFFFF</item>
         <item name="colorSurfaceContainerLow">#F6F8FC</item>
         <item name="elevationOverlayEnabled">false</item>
