@@ -1,5 +1,7 @@
 package com.buxingjie.appfilemonitor.core
 
+import android.os.Build
+import android.os.Environment
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -77,12 +79,14 @@ object Fs {
     fun mkdir(pkg: String, path: String): Shell.Result {
         var last = Shell.Result(-1, "", "未执行")
         for (p in variants(path)) {
+            if (directUsable(p) && (File(p).isDirectory || File(p).mkdirs())) {
+                return Shell.Result(0, p, "")
+            }
             last = execFor(pkg, "mkdir -p -- ${Shell.quote(p)}", p)
             if (exists(p)) {
                 fixOwnerSafe(pkg, p)
                 return Shell.Result(0, p, "")
             }
-            if (canDirect(p) && File(p).mkdirs()) return Shell.Result(0, p, "")
         }
         return last.enrich(pkg, path)
     }
@@ -90,9 +94,11 @@ object Fs {
     fun delete(pkg: String, path: String): Shell.Result {
         var last = Shell.Result(-1, "", "未执行")
         for (p in variants(path)) {
-            execFor(pkg, "rm -rf -- ${Shell.quote(p)}", p)
-            if (!exists(p)) return Shell.Result(0, p, "")
+            if (directUsable(p) && directDelete(p) && !directExists(p)) {
+                return Shell.Result(0, p, "")
+            }
             last = execFor(pkg, "rm -rf -- ${Shell.quote(p)}", p)
+            if (!exists(p)) return Shell.Result(0, p, "")
         }
         if (canDirect(path)) {
             for (p in variants(path)) {
@@ -142,38 +148,59 @@ object Fs {
     }
 
     fun importStream(pkg: String, dest: String, input: InputStream): Shell.Result {
-        // 先把数据落到应用缓存，避免 shell 写入失败（EPIPE）后输入流已耗尽、无法换路径重试
-        val base = I18n.ctx?.cacheDir
-        if (base == null) return Shell.Result(-1, "", "缓存目录不可用")
+        // 数据先落到「外部缓存目录」：该目录 shell 读得到，应用自己也读得到
+        val ctx = I18n.ctx ?: return Shell.Result(-1, "", "上下文不可用")
+        val dir = (ctx.getExternalCacheDir() ?: ctx.cacheDir)?.let { File(it, "import_cache") }
+            ?: return Shell.Result(-1, "", "缓存目录不可用")
         val buf = try {
-            val dir = File(base, "import_cache")
             dir.mkdirs()
             File.createTempFile("imp", ".tmp", dir)
         } catch (t: Throwable) {
             return Shell.Result(-1, "", "缓存写入失败：" + (t.message ?: t.toString()))
         }
-        try {
+        val size = try {
             input.use { ins -> FileOutputStream(buf).use { os -> ins.copyTo(os) } }
+            buf.length()
         } catch (t: Throwable) {
             runCatching { buf.delete() }
             return Shell.Result(-1, "", "读取来源失败：" + (t.message ?: t.toString()))
         }
+        if (size <= 0) {
+            runCatching { buf.delete() }
+            return Shell.Result(-1, "", "来源文件为空")
+        }
+        val shellReadable = buf.absolutePath.startsWith("/storage/emulated/0")
 
         var last = Shell.Result(-1, "", "未执行")
         try {
             for (p in variants(dest)) {
-                ensureParent(pkg, p)
-                execFor(pkg, "cat ${Shell.quote(buf.absolutePath)} > ${Shell.quote(p)}", p)
-                if (exists(p)) {
+                // 1) 应用身份直写（已授权“所有文件访问”时最稳，也不会破坏原文件）
+                if (directUsable(p) && copyRecursive(buf, File(p)) && File(p).length() == size) {
+                    return Shell.Result(0, p, "")
+                }
+                if (!shellReadable) {
+                    last = Shell.Result(-1, "", "缓存不可被 shell 读取")
+                    continue
+                }
+                // 2) shell 写临时文件再改名：失败时原文件保持原样，不会变成 0 字节
+                val tmp = "$p.part"
+                execFor(pkg, "mkdir -p -- ${Shell.quote(parentOf(p))}", parentOf(p))
+                last = execFor(
+                    pkg,
+                    "cp -f ${Shell.quote(buf.absolutePath)} ${Shell.quote(tmp)} && " +
+                        "mv -f ${Shell.quote(tmp)} ${Shell.quote(p)}",
+                    p
+                )
+                if (sizeOf(p) == size) {
                     fixOwnerSafe(pkg, p)
                     return Shell.Result(0, p, "")
                 }
-                if (canDirect(p) && copyRecursive(buf, File(p))) {
-                    return Shell.Result(0, p, "")
-                }
-                last = execFor(pkg, "cat ${Shell.quote(buf.absolutePath)} > ${Shell.quote(p)}", p)
+                execFor(pkg, "rm -f -- ${Shell.quote(tmp)}", p)
             }
-            return last.enrich(pkg, dest)
+            return Shell.Result(
+                -1, "",
+                (last.message().ifBlank { "写入未生效" }) + "（目标大小校验不一致）"
+            ).enrich(pkg, dest)
         } finally {
             runCatching { buf.delete() }
         }
@@ -214,6 +241,18 @@ object Fs {
 
     private fun canDirect(path: String): Boolean =
         path.startsWith("/storage/emulated/0") || path.startsWith("/sdcard")
+
+    /** 应用是否持有“所有文件访问”权限（Android 11+ 访问其他应用 Android/data 必需） */
+    fun allFilesAccess(): Boolean =
+        Build.VERSION.SDK_INT < 30 ||
+            (I18n.ctx?.let { Environment.isExternalStorageManager() } ?: false)
+
+    /** 只有“共享存储 + 已授权”才适合用应用自身身份直接操作 */
+    private fun directUsable(path: String): Boolean = canDirect(path) && allFilesAccess()
+
+    private fun sizeOf(path: String): Long =
+        Shell.exec("wc -c < ${Shell.quote(path)} 2>/dev/null", 15000)
+            .out.trim().toLongOrNull() ?: -1L
 
     private fun directDelete(path: String): Boolean {
         val f = File(path)

@@ -1,8 +1,10 @@
 package com.buxingjie.appfilemonitor.ui
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.provider.OpenableColumns
 import android.view.LayoutInflater
 import android.view.View
@@ -40,6 +42,7 @@ class FilesFragment : Fragment() {
     private var updatingChips = false
     private var privateOk = false
     private var privateChecked: String? = null
+    private var allFilesPrompted = false
 
     private val importLauncher =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -280,6 +283,10 @@ class FilesFragment : Fragment() {
     }
 
     private fun startImport(uri: Uri) {
+        runWithPermission { doImport(uri) }
+    }
+
+    private fun doImport(uri: Uri) {
         val pkg = target ?: return
         val dir = currentPath ?: return
         val name = queryName(uri) ?: "import_${System.currentTimeMillis()}.bin"
@@ -305,6 +312,10 @@ class FilesFragment : Fragment() {
 
 
     private fun startFolderImport(uri: Uri) {
+        runWithPermission { doFolderImport(uri) }
+    }
+
+    private fun doFolderImport(uri: Uri) {
         val pkg = target ?: return
         val dir = currentPath ?: return
         val ctx = requireContext().applicationContext
@@ -421,12 +432,50 @@ class FilesFragment : Fragment() {
     }
 
     private fun doOp(label: String, block: () -> Shell.Result) {
+        runWithPermission { doOpInner(label, block) }
+    }
+
+    private fun doOpInner(label: String, block: () -> Shell.Result) {
         val dir = currentPath
         viewLifecycleOwner.lifecycleScope.launch {
             val r = withContext(Dispatchers.IO) { block() }
             toast(if (r.ok) "${label}成功" else "${label}失败：${r.message().take(200)}")
-            if (r.ok && dir != null) loadDir(dir)
+            if (dir != null) loadDir(dir)
+            if (!r.ok && !Fs.allFilesAccess()) {
+                allFilesPrompted = true
+                askAllFiles {}
+            }
         }
+    }
+
+    /** 写操作前检查“所有文件访问”权限，未授权先提示一次，可选择继续尝试 */
+    private fun runWithPermission(action: () -> Unit) {
+        if (Fs.allFilesAccess() || allFilesPrompted) {
+            action()
+            return
+        }
+        allFilesPrompted = true
+        askAllFiles(action)
+    }
+
+    private fun askAllFiles(continueAction: () -> Unit) {
+        val ctx = requireContext()
+        AlertDialog.Builder(ctx)
+            .setTitle("需要「所有文件访问」权限")
+            .setMessage(
+                "Android 11 起，删除、新建、导入到别的应用的 Android/data 目录需要该权限。\n" +
+                    "请到系统设置里给 FileDetection 打开「所有文件访问」，再回来重试。"
+            )
+            .setPositiveButton("去开启") { _, _ ->
+                runCatching {
+                    startActivity(
+                        Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                            .setData(Uri.parse("package:" + ctx.packageName))
+                    )
+                }
+            }
+            .setNegativeButton("继续尝试") { _, _ -> continueAction() }
+            .show()
     }
 
     private fun promptText(title: String, initial: String, onOk: (String) -> Unit) {
