@@ -191,9 +191,17 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="启动时自动检测 GitHub 最新版本；应用内下载会自动使用镜像站加速。"
+                    android:text="启动时自动检测 GitHub 最新版本；下载与检测均按所选线路走。"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="12sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnUpdateRoute"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="更新线路：自动（智能选线）" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnCheckUpdate"

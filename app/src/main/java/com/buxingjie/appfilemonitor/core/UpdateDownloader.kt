@@ -17,15 +17,10 @@ import java.security.MessageDigest
  */
 object UpdateDownloader {
 
-    private val MIRRORS = listOf(
-        "https://gh-proxy.com/",
-        "https://ghproxy.net/",
-        "https://ghfast.top/"
-    )
-
     fun download(
         context: Context,
         info: UpdateChecker.Info,
+        route: Int = 0,
         onProgress: (Int) -> Unit,
         isCancelled: () -> Boolean
     ): Result<File> {
@@ -34,7 +29,7 @@ object UpdateDownloader {
 
         val dir = File(context.cacheDir, "update").apply { mkdirs() }
         val target = File(dir, "AppFileMonitor-${info.version}.apk")
-        val urls = (MIRRORS.map { it + rawUrl } + rawUrl).distinct()
+        val urls = UpdateRoutes.fileUrls(route, rawUrl).distinct()
         var lastError: String? = null
 
         for ((index, url) in urls.withIndex()) {

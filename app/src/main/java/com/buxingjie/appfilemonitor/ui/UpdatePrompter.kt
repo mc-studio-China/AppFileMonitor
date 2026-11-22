@@ -31,7 +31,7 @@ class UpdatePrompter(private val activity: AppCompatActivity) {
         activity.lifecycleScope.launch {
             try {
                 val result = withContext(Dispatchers.IO) {
-                    UpdateChecker.fetch()
+                    UpdateChecker.fetch(Prefs.updateRoute(activity))
                 }
                 if (activity.isFinishing || activity.isDestroyed) return@launch
                 result.onSuccess { info ->
@@ -141,6 +141,7 @@ class UpdatePrompter(private val activity: AppCompatActivity) {
                     UpdateDownloader.download(
                         activity.applicationContext,
                         info,
+                        Prefs.updateRoute(activity),
                         { pct ->
                             activity.runOnUiThread {
                                 if (cancelled || activity.isFinishing || activity.isDestroyed) {

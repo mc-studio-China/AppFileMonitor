@@ -37,6 +37,12 @@ object Prefs {
         sp(ctx).edit().putString("ui_lang", code).apply()
     }
 
+    fun updateRoute(ctx: Context): Int = sp(ctx).getInt("update_route", 0)
+
+    fun setUpdateRoute(ctx: Context, route: Int) {
+        sp(ctx).edit().putInt("update_route", route).apply()
+    }
+
     fun ignoredVersion(ctx: Context): String? =
         sp(ctx).getString("ignored_update", null)
 

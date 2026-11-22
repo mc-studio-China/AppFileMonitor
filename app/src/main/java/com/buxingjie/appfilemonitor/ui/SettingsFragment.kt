@@ -10,12 +10,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.buxingjie.appfilemonitor.BuildConfig
 import com.buxingjie.appfilemonitor.core.I18n
 import com.buxingjie.appfilemonitor.core.Prefs
 import com.buxingjie.appfilemonitor.core.Shell
+import com.buxingjie.appfilemonitor.core.UpdateRoutes
 import com.buxingjie.appfilemonitor.databinding.FragmentSettingsBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -100,10 +102,15 @@ class SettingsFragment : Fragment() {
             "1. 手机开启「USB 调试」，用数据线连接电脑\n" +
             "2. 电脑命令行执行下面这条命令启动 Shizuku：",
             "adb shell sh /sdcard/Android/data/moe.shizuku.privileged.api/start.sh") }
+        binding.btnUpdateRoute.setOnClickListener {
+            pickRoute()
+        }
+
         binding.btnCheckUpdate.setOnClickListener {
             UpdatePrompter(requireActivity() as androidx.appcompat.app.AppCompatActivity)
                 .check(auto = false)
         }
+        refreshRoute()
         refreshStatus()
         loadSignature()
     }
@@ -273,5 +280,26 @@ class SettingsFragment : Fragment() {
 
     companion object {
         private const val REQ_SHIZUKU = 2002
+    }
+
+    private fun refreshRoute() {
+        val ctx = requireContext()
+        binding.btnUpdateRoute.text = "更新线路：" + UpdateRoutes.label(Prefs.updateRoute(ctx))
+    }
+
+    private fun pickRoute() {
+        val ctx = requireContext()
+        val routes = UpdateRoutes.ROUTES
+        val current = routes.indexOfFirst { it.id == Prefs.updateRoute(ctx) }.coerceAtLeast(0)
+        AlertDialog.Builder(ctx)
+            .setTitle("选择更新线路")
+            .setSingleChoiceItems(routes.map { it.label }.toTypedArray(), current) { d, which ->
+                Prefs.setUpdateRoute(ctx, routes[which].id)
+                refreshRoute()
+                d.dismiss()
+                toast("已切换为：" + routes[which].label)
+            }
+            .setNegativeButton("取消", null)
+            .show()
     }
 }

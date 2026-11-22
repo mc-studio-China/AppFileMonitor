@@ -12,13 +12,6 @@ object UpdateChecker {
 
     private const val REPO = "mc-studio-China/AppFileMonitor"
 
-    private val API_URLS = listOf(
-        "https://gh-proxy.com/https://api.github.com/repos/$REPO/releases/latest",
-        "https://api.github.com/repos/$REPO/releases/latest",
-        "https://ghproxy.net/https://api.github.com/repos/$REPO/releases/latest",
-        "https://ghfast.top/https://api.github.com/repos/$REPO/releases/latest"
-    )
-
     data class Info(
         val version: String,
         val tag: String,
@@ -28,9 +21,9 @@ object UpdateChecker {
         val apkSize: Long
     )
 
-    fun fetch(): Result<Info> {
+    fun fetch(route: Int = 0): Result<Info> {
         var lastError: String? = null
-        for (url in API_URLS) {
+        for (url in UpdateRoutes.apiUrls(route, REPO)) {
             try {
                 val info = parse(get(url))
                 if (info != null) return Result.success(info)
