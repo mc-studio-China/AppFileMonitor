@@ -114,6 +114,14 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:text="所有文件访问" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSelfTest"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="写入自检" />
                 </LinearLayout>
 
                 <com.google.android.material.button.MaterialButton

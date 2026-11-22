@@ -1,8 +1,8 @@
 {
-  "version": "3.0.26.9",
-  "tag": "v3.0.26.9",
-  "apk_url": "https://github.com/mc-studio-China/AppFileMonitor/releases/download/v3.0.26.9/FileDetection-v3.0.26.9.apk",
-  "apk_size": 5284668,
-  "page_url": "https://github.com/mc-studio-China/AppFileMonitor/releases/tag/v3.0.26.9",
-  "notes": "1. 补上存储权限声明（READ/WRITE_EXTERNAL_STORAGE），华为/鸿蒙才会出现「媒体和文件 → 所有文件」选项\n2. 进入文件页自动申请一次存储权限\n3. 操作失败改为弹出可复制的完整报错"
+  "version": "3.0.26.10",
+  "tag": "v3.0.26.10",
+  "apk_url": "https://github.com/mc-studio-China/AppFileMonitor/releases/download/v3.0.26.10/FileDetection-v3.0.26.10.apk",
+  "apk_size": 5288196,
+  "page_url": "https://github.com/mc-studio-China/AppFileMonitor/releases/tag/v3.0.26.10",
+  "notes": "1. 新增「写入自检」：一键检测 Shell/应用身份在当前 Android/data 目录能否建目录、删目录，结果可复制\n2. 用于定位华为机型是否被系统拦截写入"
 }

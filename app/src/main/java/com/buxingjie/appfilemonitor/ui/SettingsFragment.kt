@@ -24,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import rikka.shizuku.Shizuku
+import java.io.File
 import java.security.MessageDigest
 
 class SettingsFragment : Fragment() {
@@ -74,6 +75,8 @@ class SettingsFragment : Fragment() {
         binding.btnGrantShizuku.setOnClickListener { requestShizuku() }
         binding.btnOpenShizuku.setOnClickListener { openShizuku() }
         binding.btnDetectRoot.setOnClickListener { detectRoot() }
+        binding.btnSelfTest.setOnClickListener { runSelfTest() }
+
         binding.btnAllFiles.text =
             if (Fs.allFilesAccess()) "所有文件访问：已开启" else "所有文件访问：未开启（点此开启）"
         binding.btnAllFiles.setOnClickListener {
@@ -283,6 +286,64 @@ class SettingsFragment : Fragment() {
 
     companion object {
         private const val REQ_SHIZUKU = 2002
+    }
+
+
+    private fun runSelfTest() {
+        val ctx = requireContext()
+        val pkg = Prefs.target(ctx)
+        if (pkg == null) {
+            toast("请先在「文件」页选择目标应用")
+            return
+        }
+        toast("正在自检…")
+        lifecycleScope.launch {
+            val report = withContext(Dispatchers.IO) {
+                val sb = StringBuilder()
+                sb.appendLine("应用 uid：" + Shell.exec("id", 15000).out.trim())
+                sb.appendLine("执行模式：" + Shell.mode.label)
+                sb.appendLine("所有文件访问：" + if (Fs.allFilesAccess()) "已开启" else "未开启")
+                val dir = "/storage/emulated/0/Android/data/" + pkg + "/files"
+                sb.appendLine("目标目录：" + dir)
+                sb.appendLine("父目录信息：")
+                sb.appendLine(Shell.exec("ls -ld " + Shell.quote(dir), 15000).message())
+                sb.appendLine("shell 建目录测试：")
+                val t1 = Shell.exec(
+                    "mkdir -p " + Shell.quote(dir + "/ztest_folder"), 20000
+                )
+                sb.appendLine("  exit=" + t1.code + " " + t1.message())
+                sb.appendLine("shell 删目录测试：")
+                val t2 = Shell.exec("rmdir " + Shell.quote(dir + "/ztest_folder"), 20000)
+                sb.appendLine("  exit=" + t2.code + " " + t2.message())
+                sb.appendLine("应用身份建目录测试：")
+                sb.appendLine(
+                    "  " + runCatching { File(dir, "dtest_folder").let { it.mkdirs() || it.isDirectory } }
+                        .getOrElse { false }
+                )
+                sb.appendLine("应用身份删除测试：")
+                sb.appendLine(
+                    "  " + runCatching { File(dir, "dtest_folder").delete() }
+                        .getOrElse { false }
+                )
+                sb.appendLine("Shizuku 权限：" +
+                    if (Shell.mode == com.buxingjie.appfilemonitor.core.Shell.Mode.SHIZUKU_SHELL ||
+                        Shell.mode == com.buxingjie.appfilemonitor.core.Shell.Mode.SHIZUKU_ROOT
+                    ) "已连接" else "未连接")
+                sb.toString()
+            }
+            if (!isAdded) return@launch
+            AlertDialog.Builder(requireContext())
+                .setTitle("写入自检")
+                .setMessage(report)
+                .setPositiveButton("复制") { _, _ ->
+                    val cm = requireContext()
+                        .getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                    cm.setPrimaryClip(android.content.ClipData.newPlainText("自检", report))
+                    toast("已复制")
+                }
+                .setNegativeButton("关闭", null)
+                .show()
+        }
     }
 
     private fun refreshRoute() {
