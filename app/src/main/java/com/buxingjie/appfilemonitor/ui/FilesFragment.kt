@@ -3,6 +3,7 @@ package com.buxingjie.appfilemonitor.ui
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.provider.OpenableColumns
@@ -43,10 +44,16 @@ class FilesFragment : Fragment() {
     private var privateOk = false
     private var privateChecked: String? = null
     private var allFilesPrompted = false
+    private var storageAsked = false
 
     private val importLauncher =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri != null) startImport(uri)
+        }
+
+    private val storagePermLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+            if (!Fs.allFilesAccess()) askAllFiles {}
         }
 
     private val folderImportLauncher =
@@ -139,6 +146,17 @@ class FilesFragment : Fragment() {
         super.onResume()
         _binding?.root?.let { I18n.apply(it) }
         loadState()
+        if (!Fs.allFilesAccess() && !storageAsked && Build.VERSION.SDK_INT >= 23) {
+            storageAsked = true
+            runCatching {
+                storagePermLauncher.launch(
+                    arrayOf(
+                        android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    )
+                )
+            }
+        }
     }
 
     override fun onDestroyView() {
@@ -446,7 +464,11 @@ class FilesFragment : Fragment() {
         val dir = currentPath
         viewLifecycleOwner.lifecycleScope.launch {
             val r = withContext(Dispatchers.IO) { block() }
-            toast(if (r.ok) "${label}成功" else "${label}失败：${r.message().take(200)}")
+            if (r.ok) {
+                toast("${label}成功")
+            } else {
+                showOpError(label, r.message())
+            }
             if (dir != null) loadDir(dir)
             if (!r.ok && !Fs.allFilesAccess()) {
                 allFilesPrompted = true
@@ -490,6 +512,25 @@ class FilesFragment : Fragment() {
                 }
             }
             .setNegativeButton("继续尝试") { _, _ -> continueAction() }
+            .show()
+    }
+
+
+    /** 操作失败时弹出完整报错，可复制，便于定位 */
+    private fun showOpError(label: String, message: String) {
+        val ctx = requireContext()
+        AlertDialog.Builder(ctx)
+            .setTitle("${label}失败")
+            .setMessage(message.ifBlank { "未知原因" })
+            .setPositiveButton("复制错误信息") { _, _ ->
+                val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE)
+                    as android.content.ClipboardManager
+                cm.setPrimaryClip(
+                    android.content.ClipData.newPlainText("错误信息", message)
+                )
+                toast("已复制")
+            }
+            .setNegativeButton("关闭", null)
             .show()
     }
 
