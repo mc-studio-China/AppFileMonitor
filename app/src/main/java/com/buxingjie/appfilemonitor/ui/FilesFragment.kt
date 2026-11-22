@@ -150,10 +150,11 @@ class FilesFragment : Fragment() {
         if (!Fs.allFilesAccess() && !grantTried) {
             grantTried = true
             viewLifecycleOwner.lifecycleScope.launch {
-                val ok = withContext(Dispatchers.IO) {
+                val res = withContext(Dispatchers.IO) {
                     Fs.grantAllFilesViaShizuku(requireContext())
                 }
-                if (ok && _binding != null) toast("已通过 Shizuku 开启所有文件访问")
+                if (_binding != null && res.first) toast("已通过 Shizuku 开启所有文件访问")
+                else if (_binding != null) android.util.Log.w("FileDetection", "grant: " + res.second)
             }
         }
         if (!Fs.allFilesAccess() && !storageAsked && Build.VERSION.SDK_INT >= 23) {
@@ -532,6 +533,19 @@ class FilesFragment : Fragment() {
         AlertDialog.Builder(ctx)
             .setTitle("${label}失败")
             .setMessage(message.ifBlank { "未知原因" })
+            .setNeutralButton(if (Fs.allFilesAccess()) "复制" else "用 Shizuku 开启授权") { _, _ ->
+                if (Fs.allFilesAccess()) {
+                    val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE)
+                        as android.content.ClipboardManager
+                    cm.setPrimaryClip(android.content.ClipData.newPlainText("错误信息", message))
+                    toast("已复制")
+                } else {
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        val res = withContext(Dispatchers.IO) { Fs.grantAllFilesViaShizuku(ctx) }
+                        toast(if (res.first) "已开启，请重试" else "开启失败：" + res.second.take(120))
+                    }
+                }
+            }
             .setPositiveButton("复制错误信息") { _, _ ->
                 val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE)
                     as android.content.ClipboardManager

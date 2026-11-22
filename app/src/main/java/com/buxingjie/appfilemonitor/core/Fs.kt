@@ -252,13 +252,17 @@ object Fs {
             (I18n.ctx?.let { Environment.isExternalStorageManager() } ?: false)
 
     /** 通过 Shizuku(shell) 用 appops 直接授予本应用「所有文件访问」，绕开系统里找不到开关的情况 */
-    fun grantAllFilesViaShizuku(ctx: Context): Boolean {
-        if (allFilesAccess()) return true
-        if (Shell.mode != Shell.Mode.SHIZUKU_SHELL && Shell.mode != Shell.Mode.SHIZUKU_ROOT) return false
+    fun grantAllFilesViaShizuku(ctx: Context): Pair<Boolean, String> {
+        if (allFilesAccess()) return true to "已是开启状态"
+        if (Shell.mode != Shell.Mode.SHIZUKU_SHELL && Shell.mode != Shell.Mode.SHIZUKU_ROOT) {
+            return false to "Shizuku 未连接（当前模式：${Shell.mode.label}）"
+        }
         val p = ctx.packageName
-        Shell.exec("appops set $p MANAGE_EXTERNAL_STORAGE allow", 20000)
+        val r1 = Shell.exec("appops set $p MANAGE_EXTERNAL_STORAGE allow", 20000)
         Shell.exec("appops set $p LEGACY_STORAGE allow", 20000)
-        return allFilesAccess()
+        val ok = allFilesAccess()
+        val detail = "appops exit=${r1.code} " + r1.message().take(200)
+        return (ok to (if (ok) "已开启" else detail))
     }
 
     /** 只有“共享存储 + 已授权”才适合用应用自身身份直接操作 */
