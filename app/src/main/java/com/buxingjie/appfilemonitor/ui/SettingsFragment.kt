@@ -1,6 +1,8 @@
 package com.buxingjie.appfilemonitor.ui
 
 import android.content.Context
+import android.content.Intent
+import android.provider.Settings
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -69,6 +71,12 @@ class SettingsFragment : Fragment() {
         binding.btnGrantShizuku.setOnClickListener { requestShizuku() }
         binding.btnOpenShizuku.setOnClickListener { openShizuku() }
         binding.btnDetectRoot.setOnClickListener { detectRoot() }
+        binding.btnAllFiles.setOnClickListener {
+            runCatching {
+                startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+            }.onFailure { toast("无法打开权限页") }
+        }
+
         binding.btnRefreshStatus.setOnClickListener { refreshStatus() }
         binding.btnDisableRoot.setOnClickListener {
             Shell.disableRoot(requireContext())

@@ -95,6 +95,10 @@ object I18n {
 
     private var appContext: Context? = null
 
+    /** 供其他模块取应用上下文（如文件操作缓存目录） */
+    val ctx: Context?
+        get() = appContext
+
     fun install(ctx: Context) {
         appContext = ctx.applicationContext
     }

@@ -1,5 +1,6 @@
 package com.buxingjie.appfilemonitor.ui
 
+import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
@@ -11,6 +12,7 @@ import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.documentfile.provider.DocumentFile
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -42,6 +44,11 @@ class FilesFragment : Fragment() {
     private val importLauncher =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri != null) startImport(uri)
+        }
+
+    private val folderImportLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+            if (uri != null) startFolderImport(uri)
         }
 
     override fun onCreateView(
@@ -110,7 +117,17 @@ class FilesFragment : Fragment() {
             currentPath?.let { loadDir(it) } ?: loadState()
         }
         binding.btnImport.setOnClickListener {
-            if (target == null) toast("请先选择应用") else importLauncher.launch(arrayOf("*/*"))
+            if (target == null) {
+                toast("请先选择应用")
+            } else {
+                androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                    .setTitle("导入")
+                    .setItems(arrayOf("导入文件", "导入文件夹")) { _, which ->
+                        if (which == 0) importLauncher.launch(arrayOf("*/*"))
+                        else folderImportLauncher.launch(null)
+                    }
+                    .show()
+            }
         }
         binding.btnMkdir.setOnClickListener { promptMkdir() }
     }
@@ -284,6 +301,62 @@ class FilesFragment : Fragment() {
                 if (r.ok) loadDir(dir)
             }
         }
+    }
+
+
+    private fun startFolderImport(uri: Uri) {
+        val pkg = target ?: return
+        val dir = currentPath ?: return
+        val ctx = requireContext().applicationContext
+        val tree = runCatching { DocumentFile.fromTreeUri(ctx, uri) }.getOrNull()
+        if (tree == null) {
+            toast("无法读取所选文件夹")
+            return
+        }
+        val name = tree.name?.takeIf { it.isNotBlank() } ?: "imported_folder"
+        val dest = "$dir/$name"
+        toast("正在导入文件夹…")
+        viewLifecycleOwner.lifecycleScope.launch {
+            val r = withContext(Dispatchers.IO) { copyTree(ctx, pkg, tree, dest) }
+            toast(r.first)
+            if (r.second) loadDir(dir)
+        }
+    }
+
+    private fun copyTree(
+        ctx: Context,
+        pkg: String,
+        tree: DocumentFile,
+        dest: String
+    ): Pair<String, Boolean> {
+        var ok = 0
+        var fail = 0
+        val root = Fs.mkdir(pkg, dest)
+        if (!root.ok) return "导入失败：${root.message().take(160)}" to false
+
+        fun walk(node: DocumentFile, target: String) {
+            val children = runCatching { node.listFiles() }.getOrElse { emptyArray<DocumentFile>() }
+            for (child in children) {
+                val childName = child.name ?: continue
+                val childPath = "$target/$childName"
+                if (child.isDirectory) {
+                    val r = Fs.mkdir(pkg, childPath)
+                    if (r.ok) walk(child, childPath) else fail++
+                } else {
+                    val ins = runCatching {
+                        ctx.contentResolver.openInputStream(child.uri)
+                    }.getOrNull()
+                    if (ins == null) {
+                        fail++
+                        continue
+                    }
+                    val r = Fs.importStream(pkg, childPath, ins)
+                    if (r.ok) ok++ else fail++
+                }
+            }
+        }
+        walk(tree, dest)
+        return "文件夹导入完成：成功 $ok 个文件，失败 $fail 个" to (fail == 0)
     }
 
     private fun queryName(uri: Uri): String? = runCatching {
