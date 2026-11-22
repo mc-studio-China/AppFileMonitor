@@ -1,5 +1,6 @@
 package com.buxingjie.appfilemonitor.core
 
+import android.content.Context
 import android.os.Build
 import android.os.Environment
 import java.io.ByteArrayOutputStream
@@ -249,6 +250,16 @@ object Fs {
     fun allFilesAccess(): Boolean =
         Build.VERSION.SDK_INT < 30 ||
             (I18n.ctx?.let { Environment.isExternalStorageManager() } ?: false)
+
+    /** 通过 Shizuku(shell) 用 appops 直接授予本应用「所有文件访问」，绕开系统里找不到开关的情况 */
+    fun grantAllFilesViaShizuku(ctx: Context): Boolean {
+        if (allFilesAccess()) return true
+        if (Shell.mode != Shell.Mode.SHIZUKU_SHELL && Shell.mode != Shell.Mode.SHIZUKU_ROOT) return false
+        val p = ctx.packageName
+        Shell.exec("appops set $p MANAGE_EXTERNAL_STORAGE allow", 20000)
+        Shell.exec("appops set $p LEGACY_STORAGE allow", 20000)
+        return allFilesAccess()
+    }
 
     /** 只有“共享存储 + 已授权”才适合用应用自身身份直接操作 */
     private fun directUsable(path: String): Boolean = canDirect(path) && allFilesAccess()

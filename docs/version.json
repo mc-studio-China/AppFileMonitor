@@ -1,8 +1,8 @@
 {
-  "version": "3.0.26.10",
-  "tag": "v3.0.26.10",
-  "apk_url": "https://github.com/mc-studio-China/AppFileMonitor/releases/download/v3.0.26.10/FileDetection-v3.0.26.10.apk",
-  "apk_size": 5288196,
-  "page_url": "https://github.com/mc-studio-China/AppFileMonitor/releases/tag/v3.0.26.10",
-  "notes": "1. 新增「写入自检」：一键检测 Shell/应用身份在当前 Android/data 目录能否建目录、删目录，结果可复制\n2. 用于定位华为机型是否被系统拦截写入"
+  "version": "3.0.26.11",
+  "tag": "v3.0.26.11",
+  "apk_url": "https://github.com/mc-studio-China/AppFileMonitor/releases/download/v3.0.26.11/FileDetection-v3.0.26.11.apk",
+  "apk_size": 5289460,
+  "page_url": "https://github.com/mc-studio-China/AppFileMonitor/releases/tag/v3.0.26.11",
+  "notes": "1. 新增「用 Shizuku 一键开启所有文件访问」：通过 appops 直接授权，绕开系统里找不到开关的问题\n2. 进入文件页会自动尝试一次\n3. 授权成功后删除/导入走应用身份直写，可写其他应用 Android/data"
 }

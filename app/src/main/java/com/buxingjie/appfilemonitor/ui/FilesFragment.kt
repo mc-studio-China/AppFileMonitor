@@ -45,6 +45,7 @@ class FilesFragment : Fragment() {
     private var privateChecked: String? = null
     private var allFilesPrompted = false
     private var storageAsked = false
+    private var grantTried = false
 
     private val importLauncher =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -146,6 +147,15 @@ class FilesFragment : Fragment() {
         super.onResume()
         _binding?.root?.let { I18n.apply(it) }
         loadState()
+        if (!Fs.allFilesAccess() && !grantTried) {
+            grantTried = true
+            viewLifecycleOwner.lifecycleScope.launch {
+                val ok = withContext(Dispatchers.IO) {
+                    Fs.grantAllFilesViaShizuku(requireContext())
+                }
+                if (ok && _binding != null) toast("已通过 Shizuku 开启所有文件访问")
+            }
+        }
         if (!Fs.allFilesAccess() && !storageAsked && Build.VERSION.SDK_INT >= 23) {
             storageAsked = true
             runCatching {

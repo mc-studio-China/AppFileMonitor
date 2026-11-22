@@ -125,6 +125,14 @@
                 </LinearLayout>
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnGrantAllFiles"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="用 Shizuku 一键开启所有文件访问" />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDisableRoot"
                     style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="wrap_content"

@@ -79,6 +79,16 @@ class SettingsFragment : Fragment() {
 
         binding.btnAllFiles.text =
             if (Fs.allFilesAccess()) "所有文件访问：已开启" else "所有文件访问：未开启（点此开启）"
+        binding.btnGrantAllFiles.setOnClickListener {
+            toast("正在通过 Shizuku 授权…")
+            lifecycleScope.launch {
+                val ok = withContext(Dispatchers.IO) { Fs.grantAllFilesViaShizuku(requireContext()) }
+                binding.btnAllFiles.text =
+                    if (ok) "所有文件访问：已开启" else "所有文件访问：未开启（点此开启）"
+                toast(if (ok) "已开启所有文件访问" else "授权失败，请确认 Shizuku 已授权运行")
+            }
+        }
+
         binding.btnAllFiles.setOnClickListener {
             runCatching {
                 startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
