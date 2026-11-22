@@ -1,0 +1,8 @@
+{
+  "version": "3.0.26.8",
+  "tag": "v3.0.26.8",
+  "apk_url": "https://github.com/mc-studio-China/AppFileMonitor/releases/download/v3.0.26.8/FileDetection-v3.0.26.8.apk",
+  "apk_size": 5283720,
+  "page_url": "https://github.com/mc-studio-China/AppFileMonitor/releases/tag/v3.0.26.8",
+  "notes": "1. 修复：其他更新线路 HTTP 403（改为读静态 version.json，不走 GitHub API）\n2. 修复：无法删除文件（写操作优先应用身份直连，权限未开启会引导）\n3. 修复：无法导入文件/文件夹\n4. 导入同名文件夹自动加序号（name(2)）"
+}

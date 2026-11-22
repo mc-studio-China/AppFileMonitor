@@ -76,6 +76,9 @@ object Fs {
     private fun exists(path: String): Boolean =
         Shell.exec("test -e ${Shell.quote(path)} && echo yes", 15000).out.contains("yes")
 
+    /** 路径是否存在（多等价路径任一存在即算存在） */
+    fun existsPath(path: String): Boolean = variants(path).any { exists(it) }
+
     fun mkdir(pkg: String, path: String): Shell.Result {
         var last = Shell.Result(-1, "", "未执行")
         for (p in variants(path)) {

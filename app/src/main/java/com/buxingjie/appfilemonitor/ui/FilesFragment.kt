@@ -324,7 +324,14 @@ class FilesFragment : Fragment() {
             toast("无法读取所选文件夹")
             return
         }
-        val name = tree.name?.takeIf { it.isNotBlank() } ?: "imported_folder"
+        val baseName = tree.name?.takeIf { it.isNotBlank() } ?: "imported_folder"
+        // 同名文件夹自动加序号，避免和有内容的老文件夹混在一起
+        var name = baseName
+        var index = 2
+        while (Fs.existsPath("$dir/$name")) {
+            name = "$baseName($index)"
+            index++
+        }
         val dest = "$dir/$name"
         toast("正在导入文件夹…")
         viewLifecycleOwner.lifecycleScope.launch {
@@ -467,11 +474,19 @@ class FilesFragment : Fragment() {
                     "请到系统设置里给 FileDetection 打开「所有文件访问」，再回来重试。"
             )
             .setPositiveButton("去开启") { _, _ ->
-                runCatching {
+                val ok = runCatching {
                     startActivity(
                         Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
                             .setData(Uri.parse("package:" + ctx.packageName))
                     )
+                }.isSuccess
+                if (!ok) {
+                    runCatching {
+                        startActivity(
+                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                .setData(Uri.parse("package:" + ctx.packageName))
+                        )
+                    }
                 }
             }
             .setNegativeButton("继续尝试") { _, _ -> continueAction() }

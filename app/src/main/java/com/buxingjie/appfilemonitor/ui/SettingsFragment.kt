@@ -14,6 +14,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.buxingjie.appfilemonitor.BuildConfig
+import com.buxingjie.appfilemonitor.core.Fs
 import com.buxingjie.appfilemonitor.core.I18n
 import com.buxingjie.appfilemonitor.core.Prefs
 import com.buxingjie.appfilemonitor.core.Shell
@@ -73,6 +74,8 @@ class SettingsFragment : Fragment() {
         binding.btnGrantShizuku.setOnClickListener { requestShizuku() }
         binding.btnOpenShizuku.setOnClickListener { openShizuku() }
         binding.btnDetectRoot.setOnClickListener { detectRoot() }
+        binding.btnAllFiles.text =
+            if (Fs.allFilesAccess()) "所有文件访问：已开启" else "所有文件访问：未开启（点此开启）"
         binding.btnAllFiles.setOnClickListener {
             runCatching {
                 startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))

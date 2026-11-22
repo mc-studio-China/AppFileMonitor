@@ -26,6 +26,12 @@ object UpdateRoutes {
     fun label(id: Int): String =
         ROUTES.firstOrNull { it.id == id }?.label ?: ROUTES[0].label
 
+    /** 版本信息（静态 version.json，不走 GitHub API，不会 403 限流） */
+    fun versionJsonUrls(routeId: Int, repo: String): List<String> {
+        val direct = "https://raw.githubusercontent.com/$repo/main/docs/version.json"
+        return urls(routeId) { host -> if (host.isEmpty()) direct else host + direct }
+    }
+
     fun apiUrls(routeId: Int, repo: String): List<String> {
         val direct = "https://api.github.com/repos/$repo/releases/latest"
         return urls(routeId) { host -> if (host.isEmpty()) direct else host + direct }

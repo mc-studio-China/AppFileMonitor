@@ -19,8 +19,8 @@ android {
         applicationId = "com.pedestrian.street.studio"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3002607
-        versionName = "3.0.26.7"
+        versionCode = 3002608
+        versionName = "3.0.26.8"
     }
 
     signingConfigs {

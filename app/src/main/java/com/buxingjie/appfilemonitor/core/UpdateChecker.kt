@@ -23,6 +23,17 @@ object UpdateChecker {
 
     fun fetch(route: Int = 0): Result<Info> {
         var lastError: String? = null
+        // 1) 优先读静态 version.json：不走 GitHub API，不受 403 限流影响
+        for (url in UpdateRoutes.versionJsonUrls(route, REPO)) {
+            try {
+                val info = parseVersionJson(get(url))
+                if (info != null) return Result.success(info)
+                lastError = "version.json 数据无效"
+            } catch (t: Throwable) {
+                lastError = t.message ?: t.javaClass.simpleName
+            }
+        }
+        // 2) 兜底走 GitHub Release API
         for (url in UpdateRoutes.apiUrls(route, REPO)) {
             try {
                 val info = parse(get(url))
@@ -33,6 +44,26 @@ object UpdateChecker {
             }
         }
         return Result.failure(IllegalStateException(lastError ?: "无法连接 GitHub"))
+    }
+
+    private fun parseVersionJson(text: String): Info? {
+        val json = JSONObject(text)
+        val version = json.optString("version").trim().removePrefix("v")
+        if (version.isBlank()) return null
+        var apkUrl = json.optString("apk_url").trim().ifBlank { null }
+        if (apkUrl != null && !apkUrl.startsWith("http")) {
+            apkUrl = "https://github.com/$REPO/releases/download/v$version/" + apkUrl.trimStart('/')
+        }
+        return Info(
+            version = version,
+            tag = json.optString("tag").ifBlank { "v$version" },
+            changelog = json.optString("notes").trim(),
+            pageUrl = json.optString("page_url").ifBlank {
+                "https://github.com/$REPO/releases/tag/v$version"
+            },
+            apkUrl = apkUrl,
+            apkSize = json.optLong("apk_size", 0L)
+        )
     }
 
     fun isNewer(current: String, latest: String): Boolean {
